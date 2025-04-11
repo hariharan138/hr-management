@@ -34,7 +34,8 @@ const Login: React.FC = () => {
 
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", form)
-      localStorage.setItem("token", res.data.token)
+      // Store token in HTTP-only cookie instead of localStorage
+      document.cookie = `token=${res.data.token}; path=/`
       setMessage({ type: "success", text: "Login successful. Welcome back!" })
 
       const profile = await axios.get("http://localhost:5000/api/auth/me", {
@@ -44,8 +45,6 @@ const Login: React.FC = () => {
       })
 
       setUser(profile.data)
-      
-      // Redirect to dashboard/attendance after successful login
       router.push("/dashboard/")
     } catch (err: any) {
       setMessage({
@@ -136,7 +135,7 @@ const Login: React.FC = () => {
 
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
-              <a href="#" className="text-primary hover:underline">
+              <a href="/Signup" className="text-primary hover:underline">
                 Sign up
               </a>
             </div>

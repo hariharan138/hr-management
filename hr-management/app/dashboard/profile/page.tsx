@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import axios from "axios"
+import { getCookie } from 'cookies-next' // Add this import
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,9 +13,66 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Mail, MapPin, Phone } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
+  const [userData, setUserData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    dateOfBirth: "",
+    gender: "",
+    maritalStatus: "",
+    employeeId: "",
+    department: "",
+    position: "",
+    joinDate: "",
+    workLocation: "",
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const token = await getCookie('token') // Add await here
+          
+          if (!token) {
+            router.push("/login")
+            return
+          }
+
+          const response = await axios.get("http://localhost:5000/api/auth/me", {
+            headers: {
+              'x-auth-token': token as string // Add type assertion
+            },
+          })
+          setUserData(response.data)
+          setLoading(false)
+        }
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          router.push("/login")
+        }
+        setError(err.response?.data?.msg || "Failed to fetch user data")
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [router])
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,8 +90,35 @@ export default function ProfilePage() {
                 <AvatarFallback className="text-2xl">JD</AvatarFallback>
               </Avatar>
               <div className="space-y-1 text-center">
-                <h3 className="text-xl font-semibold">John Doe</h3>
-                <p className="text-sm text-muted-foreground">HR Manager</p>
+                // In the Avatar section
+                <h3 className="text-xl font-semibold">{userData.name}</h3>
+                <p className="text-sm text-muted-foreground">{userData.position}</p>
+                
+                // In the contact information section
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{userData.email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{userData.phone}</span>
+                </div>
+                
+                // In the personal information form
+                <Input
+                  id="first-name"
+                  defaultValue={userData.name?.split(" ")[0]}
+                  readOnly={!isEditing}
+                  className={!isEditing ? "bg-muted" : ""}
+                />
+                
+                <Input
+                  id="email"
+                  type="email"
+                  defaultValue={userData.email}
+                  readOnly={!isEditing}
+                  className={!isEditing ? "bg-muted" : ""}
+                />
               </div>
             </div>
           </CardHeader>

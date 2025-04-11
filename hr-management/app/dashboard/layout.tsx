@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react" // Added useEffect
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { BarChart3, Calendar, ClipboardList, Clock, LogOut, Menu, User } from "lucide-react"
@@ -11,6 +11,10 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useMobile } from "@/hooks/use-mobile"
+import axios from "axios" // Added axios
+import { getCookie } from 'cookies-next' // Added cookies-next
+import { useRouter } from "next/navigation" // Add this import
+import { deleteCookie } from 'cookies-next' // Add this import
 
 interface NavItem {
   title: string
@@ -52,8 +56,49 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter() // Add router
   const isMobile = useMobile()
   const [open, setOpen] = useState(false)
+  const [userData, setUserData] = useState({ name: "User", position: "" }) // Added userData state
+  
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const token = getCookie('token')
+          
+          if (token) {
+            const response = await axios.get("http://localhost:5000/api/auth/me", {
+              headers: {
+                'x-auth-token': token as string
+              },
+            })
+            setUserData(response.data)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch user data", err)
+      }
+    }
+
+    fetchUserData()
+  }, [])
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    if (!name) return "U"
+    return name.split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2)
+  }
+
+  // Add logout handler function
+  const handleLogout = () => {
+    deleteCookie('token')
+    router.push('/')
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -97,13 +142,13 @@ export default function DashboardLayout({
         <div className="ml-auto flex items-center gap-2">
           <Avatar>
             <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarFallback>{getInitials(userData.name)}</AvatarFallback>
           </Avatar>
           <div className="hidden md:block">
-            <div className="text-sm font-medium">John Doe</div>
-            <div className="text-xs text-muted-foreground">HR Manager</div>
+            <div className="text-sm font-medium">{userData.name || "User"}</div>
+            <div className="text-xs text-muted-foreground">{userData.position || "Employee"}</div>
           </div>
-          <Button variant="ghost" size="icon" className="ml-2">
+          <Button variant="ghost" size="icon" className="ml-2" onClick={handleLogout}>
             <LogOut className="h-5 w-5" />
             <span className="sr-only">Log out</span>
           </Button>

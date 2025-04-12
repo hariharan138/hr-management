@@ -48,7 +48,7 @@ export default function ProfilePage() {
 
           const response = await axios.get("http://localhost:5000/api/auth/me", {
             headers: {
-              'x-auth-token': token as string // Add type assertion
+              'x-auth-token': token as string 
             },
           })
           setUserData(response.data)
@@ -90,11 +90,11 @@ export default function ProfilePage() {
                 <AvatarFallback className="text-2xl">JD</AvatarFallback>
               </Avatar>
               <div className="space-y-1 text-center">
-                // In the Avatar section
+                
                 <h3 className="text-xl font-semibold">{userData.name}</h3>
                 <p className="text-sm text-muted-foreground">{userData.position}</p>
                 
-                // In the contact information section
+                
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{userData.email}</span>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
                   <span className="text-sm">{userData.phone}</span>
                 </div>
                 
-                // In the personal information form
+
                 <Input
                   id="first-name"
                   defaultValue={userData.name?.split(" ")[0]}
